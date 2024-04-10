@@ -10,9 +10,13 @@ import MapKit
 
 class ViewController: UIViewController {
 
+    // kyiv lat 50,450001 long 30,523333
+
+    var locationManager: CLLocationManager?
+
     lazy var mapView: MKMapView = {
         let map = MKMapView()
-//        map.showsUserLocation = true
+        map.showsUserLocation = true
         map.translatesAutoresizingMaskIntoConstraints = false
         return map
     }()
@@ -31,6 +35,15 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        // init location manager
+        locationManager = CLLocationManager()
+        locationManager?.delegate = self
+
+        locationManager?.requestWhenInUseAuthorization()
+        locationManager?.requestAlwaysAuthorization()
+        locationManager?.requestLocation()
+
         setupUI()
     }
 
@@ -54,9 +67,40 @@ class ViewController: UIViewController {
             mapView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             mapView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
-
-
     }
 
+    private func checkLocationAuthorization() {
+        guard let locationManager = locationManager,
+              let location = locationManager.location else { return }
+
+        switch locationManager.authorizationStatus {
+            case .authorizedWhenInUse, .authorizedAlways:
+                let region = MKCoordinateRegion(
+                    center: location.coordinate,
+                    latitudinalMeters: 5000,
+                    longitudinalMeters: 5000)
+                mapView.setRegion(region, animated: true)
+            case .denied:
+                print("Location services has been denided")
+            case .notDetermined, .restricted:
+                print("Location cannot be determined or restricted")
+            @unknown default:
+                print("Unknow error. Unable to get location")
+        }
+    }
 }
 
+// MARK: - CLLocationManagerDelegate
+extension ViewController: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        print(locations)
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        checkLocationAuthorization()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {
+        NSLog(error.localizedDescription)
+    }
+}
