@@ -13,9 +13,11 @@ class ViewController: UIViewController {
     // kyiv lat 50,450001 long 30,523333
 
     var locationManager: CLLocationManager?
+    private var places: [PlaceAnnotation] = []
 
     lazy var mapView: MKMapView = {
         let map = MKMapView()
+        map.delegate = self
         map.showsUserLocation = true
         map.translatesAutoresizingMaskIntoConstraints = false
         return map
@@ -118,12 +120,14 @@ class ViewController: UIViewController {
 
             guard let response = response, error == nil else { return }
 
-            let places = response.mapItems.map(PlaceAnnotation.init)
-            places.forEach { place in
+            self?.places = response.mapItems.map(PlaceAnnotation.init)
+            self?.places.forEach { place in
                 self?.mapView.addAnnotation(place)
             }
-
-            self?.presentPlacesSheet(places: places)
+            
+            if let places = self?.places {
+                self?.presentPlacesSheet(places: places)
+            }
         }
     }
 }
@@ -139,6 +143,29 @@ extension ViewController: UITextFieldDelegate {
         }
 
         return true
+    }
+}
+
+// MARK: - MKMapViewDelegate
+extension ViewController: MKMapViewDelegate {
+
+    private func clearAllSelections() {
+        self.places = self.places.map{ place in
+            place.isSelected = false
+            return place
+        }
+    }
+
+    func mapView(_ mapView: MKMapView, didSelect annotation: any MKAnnotation) {
+        // clear all selections
+        clearAllSelections()
+
+        guard let selectedAnnotation = annotation as? PlaceAnnotation else { return }
+
+        let placeAnnotation = self.places.first(where: { $0.id == selectedAnnotation.id })
+        placeAnnotation?.isSelected = true
+
+        presentPlacesSheet(places: self.places)
     }
 }
 
