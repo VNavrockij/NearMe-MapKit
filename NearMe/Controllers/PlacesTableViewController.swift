@@ -45,6 +45,12 @@ class PlacesTableViewController: UITableViewController {
         return meters.converted(to: UnitLength.meters).formatted()
     }
 
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let place = places[indexPath.row]
+        let placeDetailVC = PlaceDetailViewController(place: place)
+        present(placeDetailVC, animated: true)
+    }
+
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: CellIdentifier.cellInd.rawValue, for: indexPath)
         let place = places[indexPath.row]
